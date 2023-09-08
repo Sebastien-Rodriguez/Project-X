@@ -1,1 +1,0 @@
-from .configpath import *

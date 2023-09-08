@@ -1,0 +1,23 @@
+# Discord token
+TOKEN=""
+
+# Channels name
+LOGGING="" 
+COMMAND=""
+SUPPORT=""
+
+# Roles name
+ADMIN=""
+MODO=""
+REFERANT=""
+SENIOR=""
+JUNIOR=""
+
+# Database
+USER="" 
+PASSWORD=""
+PORT"=" 
+IP="" 
+
+# Start tests
+TESTS=False

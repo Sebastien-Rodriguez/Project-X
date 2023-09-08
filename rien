@@ -1,0 +1,21 @@
+# 1 Service
+# Base de donnée -> SQL LITE
+
+# 1 Service
+# Un site web -> Python / HTML CSS
+# Un Bot -> Python
+
+
+# Role Mod -> Admin, Modo, < Referent Langage >.
+# Role User -> Nouveau, Junior, Senior
+# Check -> IsBan, IsMute, IsLogged, IsAmin, IsModo, IsReferent, IsHJunior, IsSenior, MaxTicket
+# Check Create Account -> Check ID Discord, Check email, Check IP, Check VPN (Pas sur pour le VPN).
+# Stockage -> < BDD VOLUME >, < LOG VOLUME >, < LOG DISCORD CHANNEL >
+
+
+# Account
+# CREATE ACCOUNT
+#   - Email
+#   - Password
+#   - Verif Email
+#   - Verif IP
