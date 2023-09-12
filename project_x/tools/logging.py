@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Union
 
-from . import config_manager
+from . import config_logging
 
 from discord.ext import commands
 import aiofiles
@@ -46,7 +46,7 @@ class ManageLoggingFile:
 
 
     def __init__(self) -> None:
-        max_queue_size = config_manager.getint("MANAGE_FILE", "MAX_PENDING")
+        max_queue_size = config_logging.getint("MANAGE_FILE", "MAX_PENDING")
 
         self.running = asyncio.Event()
         self.queue: asyncio.Queue[str] = asyncio.Queue(max_queue_size)
@@ -77,8 +77,9 @@ class ManageLoggingFile:
         then create a new JSON file every X time infinitely.
         """
 
-        PATH = config_manager.get("MANAGE_FILE", "PATH")
-        TIME_ROTATE = config_manager.getint("MANAGE_FILE", "TIME_ROTATE")
+        # Use os path here ?
+        PATH = config_logging.get("MANAGE_FILE", "PATH")
+        TIME_ROTATE = config_logging.getint("MANAGE_FILE", "TIME_ROTATE")
         
         while await self.running.wait():
             filename = datetime.now()
@@ -117,7 +118,7 @@ class ManageLoggingFile:
         while await self.running.wait():
             counter += 1
 
-            if counter >= config_manager.getint("MANAGE_FILE", "MIN_FLUSH"):
+            if counter >= config_logging.getint("MANAGE_FILE", "MIN_FLUSH"):
                 await self.file.flush()
 
             await self.file.write(await self.queue.get() + "\n")

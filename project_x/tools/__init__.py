@@ -1,6 +1,7 @@
-from logging import *
+from .logging import *
 
 
+# il faut rectifié on a un circlar import
 from configparser import ConfigParser
-config_manager = ConfigParser()
-config_manager.read("project_x/config/logging.ini")
+config_logging = ConfigParser()
+config_logging.read("project_x/config/logging.ini")

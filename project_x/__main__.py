@@ -3,7 +3,7 @@ import asyncio
 
 from .core import DiscordBot
 from .exceptions import InvalidToken
-from .tools.logging import LoggingFile, ManageLoggingFile
+from .tools import LoggingFile, ManageLoggingFile
 
 
 LOOP = asyncio.new_event_loop()
