@@ -3,22 +3,22 @@ import asyncio
 
 from .core import DiscordBot
 from .exceptions import InvalidToken
-from .tools import LoggingFile, ManageLoggingFile
+from .tools.logging import Logging
 
 
 LOOP = asyncio.new_event_loop()
 
-manage_loggingfile = ManageLoggingFile()
-logging_file = LoggingFile(manage_file=manage_loggingfile)
+logging = Logging()
 
 token = "" #os.environ.get("TOKEN")
 
 
 async def main() -> None:
-    await manage_loggingfile.start()
+    await logging.start()
+    return
 
     if token is None:
-        await logging_file.add_log("The token is missing or incorrect in the environment variables.")
+        await logging.add_log("The token is missing or incorrect in the environment variables.")
         raise InvalidToken
     else:
         discord_bot = DiscordBot(command_prefix="!", token=token)
