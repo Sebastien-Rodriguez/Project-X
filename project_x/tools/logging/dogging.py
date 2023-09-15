@@ -13,6 +13,6 @@ class Dogging(AbstractLogging):
         ...
 
 
-    async def format_log(self, message: str) -> str:
+    def format_log(self, message: str) -> str:
         return ""
     

@@ -7,24 +7,56 @@ This logging system is based on files.
 
 import asyncio
 from datetime import datetime
-from typing import Optional, Any, Union
+from typing import Optional, Any
 from enum import Enum
-
-from .utils import CONFIG
-from .abstract import AbstractLogging
-from .exceptions import IsAlreadyRunning, IsNotRunning
+import json
 
 import aiofiles
 
+from .utils import CONFIG
+from .abstract import AbstractLogging
+from .exceptions import IsAlreadyRunning, IsNotRunning, AddLogError
+
 
 class LoggingLevel(Enum):
-    DEBUG = "debug"
+    """Enum class logging levels.
+
+    Members:     
+        - INFO: To record general information about the application, 
+            such as actions taken, progress steps, and important events.
+
+        - WARNING: To record warnings about potentially problematic 
+            situations, such as an unhandled exception or any 
+            behavior that is not managed but does not threaten
+            the proper functioning of the application.
+
+        - CRITICAL: To record critical errors that can lead to significant 
+            malfunctions of the application.
+
+        - SUCCESS: To record successful events or actions.
+    """
+
+    INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
     SUCCESS = "success"
 
 
 class LoggingSource(Enum):
+    """Enum class source categories for logging.
+
+    Members:
+        - DATABASE: For database-related logs.
+        - DOGGING: For dogging-related logs.
+        - WEBSITE: For website-related logs.
+        - ACCOUNT: For account-related logs.
+        - COMPRETEUR: For compreteur-related logs.
+        - MODERATION: For moderation-related logs.
+        - PROMOTE: For promote-related logs.
+        - SUPPORT: For support-related logs.
+        - VOICE: For voice-related logs.
+        - CORE: For core system-related logs.
+    """
     DATABASE = "database"
     DOGGING = "dogging"
     WEBSITE = "website"
@@ -42,7 +74,7 @@ class Logging(AbstractLogging):
        supporting only JSON file type.
        The logging system remains running once launched
        for the duration of the application.
-    
+
     Notes:
         - The file is closed then reopened every X time 
         in order to change the file.
@@ -50,7 +82,7 @@ class Logging(AbstractLogging):
         - Start method to start the system, 
         and stop method to stop the system.
     """
-    
+
     _instance: Optional["Logging"] = None
 
 
@@ -58,11 +90,11 @@ class Logging(AbstractLogging):
         if not cls._instance:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
 
     def __init__(self) -> None:
-        MAX_PENDING = CONFIG.getint("MANAGE_FILE", "MAX_PENDING")
-    
+        MAX_PENDING = CONFIG.getint("LOGGING", "MAX_PENDING")
+
         self.running = asyncio.Event()
         self.queue: asyncio.Queue[str] = asyncio.Queue(MAX_PENDING)
         self.file: aiofiles.threadpool.text.AsyncTextIOWrapper
@@ -73,7 +105,7 @@ class Logging(AbstractLogging):
         """Start the logging file system.
 
         Raises:
-            - < IsAlreadyRunning > Raised if the logging system
+            - IsAlreadyRunning: Raised if the logging system
               has already been started.
         """
 
@@ -81,7 +113,7 @@ class Logging(AbstractLogging):
             raise IsAlreadyRunning
 
         await self.create_file()
-        
+
         asyncio.create_task(self._infinity_loop_write())
         self.running.set()
 
@@ -91,72 +123,104 @@ class Logging(AbstractLogging):
           to be written are written then stop the logging file system.
 
         Raises:
-            - < IsNotRunning > Raised if The logging system
+            - IsNotRunning: Raised if The logging system
               has not been started. 
         """
 
         if not self.running.is_set():
             raise IsNotRunning
-        
+
         await self.queue.join()
         self.running.clear()
         await self.file.close()
 
 
     async def add_log(self,
-                      source: LoggingSource, 
-                      level: LoggingLevel, 
-                      note: str, 
-                      error: Optional[Any] = None, 
-                      speed: Optional[int] = None, 
-                      other: Optional[dict[str, Any]] = None
+                      source: LoggingSource,
+                      level: LoggingLevel,
+                      note: str,
+                      error: Optional[str] = None,
+                      speed: Optional[bool] = None,
+                      other: Optional[dict[str, Any]] = None,
                       ) -> None:
-        
-        """Add a new pending message to write to the file.
+
+        """Add a log to the queue.
+
+        Notes:
+            - If a lot of logs are in the queue, 
+            the log may not be immediately processed.
+
+        Raises:
+            AddLogError: Raised if an 
+            argument type is invalid.
 
         Args:
-            message (str): Message needs to be added.
-        
-        Notes:
-            - The message must be valid for JSON format. 
-            No verification is done by the system,
-            you must ensure that the message is correctly formatted
-            otherwise it can introduce bugs.
+            - source: Information defining approximately 
+            where the logo comes from (From which service).
 
-        - "timestamp" (str): Current timestamp in string format.
-        - "level" (str): Log level: "info" for general information, "warn" for warning error,
-            "critical" for critical error, "success" for success actions.
-        - "source_system" (str) Indicates the source system or person responsible for adding the log entry.
-        - "error" (str): Any encountered error (if applicable).
-        - "message" (str): Additional information.
-        - "speed" (str): Execution speed.
-        - "data" (dict): Other data in the form of a dictionary object.
+            - level: Information defining the log level. 
+            (CRITICAL, SUCCESS etc)
 
+            - note: A small description of some character 
+            about the reason for the log.
+
+            - error: Argument indicating the exception 
+            generated if there is one.
+
+            - speed: Argument indicating how quickly 
+            something executes. (To be used as often as possible).
+
+            - other: Argument to use for data that is not 
+            categorized by the other arguments.
         """
 
-        if not isinstance(level, LoggingLevel):
-            raise ...
-        
-        elif not isinstance(source, LoggingSource):
-            raise ...
-        
-        timestamp = datetime.now()
+        arguments = (source, level, note, error, speed, other)
 
-        await self.queue.put("")
+        match arguments:
+            case (LoggingSource(), LoggingLevel(), str(),
+                  str() | None, bool() | None, dict() | None):
+
+                log_formated = Logging.format_log(
+                    source.value, level.value, note, error, speed, other)
+
+            case invalid:
+                raise AddLogError(
+                    f"{invalid} An invalid argument type was detected.")
+
+        await self.queue.put(log_formated)
 
 
-    async def format_log(self, message: Any) -> str:
-        """_summary_
-
-        Args:
-            message (str): _description_
+    @staticmethod
+    def format_log(source: Any = None, level: Any = None,
+                   note: Any = None, error: Any = None,
+                   speed: Any = None, other: Any = None
+                   ) -> str:
+        """Format the log in an X format 
+        then serialize it in a valid JSON format.
 
         Returns:
-            str: _description_
+            - Return the log format if the serialization
+              in JSON format was successful.
+        Raises:
+            - TypeError: Raised If log 
+            serialization fail.
+        Notes:
+            - If log serialization fail, it is because 
+            of a type not supported by JSON.
         """
 
-        return ""
-    
+        log_formated = {
+            "timestamp": str(datetime.now()),
+            "source": source,
+            "level": level,
+            "note": note,
+            "error": error,
+            "speed": speed,
+            "other": other
+        }
+
+        return json.dumps(log_formated)
+
 
     async def create_file(self) -> None:
         """Create a new log file with the current date, 
@@ -212,4 +276,4 @@ class Logging(AbstractLogging):
 
             await self.file.write(await self.queue.get() + "\n")
             self.queue.task_done()
-            await asyncio.sleep(2)
+            await asyncio.sleep(0)

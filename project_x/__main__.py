@@ -3,7 +3,7 @@ import asyncio
 
 from .core import DiscordBot
 from .exceptions import InvalidToken
-from .tools.logging import Logging
+from .tools.logging import Logging, LoggingSource, LoggingLevel
 
 
 LOOP = asyncio.new_event_loop()
@@ -15,6 +15,10 @@ token = "" #os.environ.get("TOKEN")
 
 async def main() -> None:
     await logging.start()
+    await logging.add_log(source = LoggingSource.ACCOUNT,
+                          level = LoggingLevel.CRITICAL,
+                          note = "test"
+                          )
     return
 
     if token is None:
